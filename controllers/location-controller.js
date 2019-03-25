@@ -1,89 +1,101 @@
 const db = require('../models/index');
-const utils =  require('../helpers/utils');
+const utils = require('../helpers/utils');
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
 const sorter = require('../helpers/sorter');
 
-const Shop = db.Shop;
+const Location = db.Location;
 
-// post a shop
+// post a location
 const post = async (req, res) => {
     res.setHeader('Content-type','application/json');
     const {
-        owner,
-        founded
+        address,
+        zip
     } = req.body;
-    let err, shop;
-    [err, shop] = await to(Shop.create({
-        'owner': owner,
-        'founded': founded
+    let err, location;
+    [err, location] = await to(Location.create({
+        'address': address,
+        'zip': zip
     }));
     if(err) return ReE(res, err, 500);
-    return ReS(res, {'message': 'Successfully created a shop',
-                    'Created Shop': shop}, 200);
+    return ReS(res, {
+        'message': 'Successfully added a location',
+        'Created Location': location
+    },200);
 };
 
-// get all shop
+// get all locations
 const getAll = async (req, res) => {
     res.setHeader('Content-type','application/json');
-    [err, shops] = await to(Shop.findAll({
+    [err, locations] = await to(Location.findAll({
         paranoid: false
     }));
-    return ReS(res, {'All Shops': shops});
+    return ReS(res, {
+        'All Locations': locations
+    });
 };
 
-// get shop by id
+// get location by id
 const getOne = async (req, res) => {
     res.setHeader('Content-type','application/json');
     const id = req.params.id;
-    [err, shop] = await to(Shop.findByPk(id));
-    if(err) return ReE(res, err, 500);
-    return ReS(res, {'Shop':shop}, 200);
+    [err, location] = await to(Location.findByPk(id));
+    if(err) return ReE(res,err,500);
+    return ReS(res, {
+        'Location':location
+    }, 200);
 };
 
-// update a shop
+// update a location
 const updateById = async (req, res) => {
     const id = req.params.id;
-    let err, shop;
-    [err, shop] = await to(Shop.update({...req.body}, {
+    let err, location;
+    [err, location] = await to(Location.update({...req.body}, {
         where: {
             id: id
         }
     }));
     if(err) return ReE(res, err, 500);
-    return ReS(res, {'message': 'Updated a shop successfully',
-                    'Updated Shop': shop}, 200);
+    return ReS(res, {
+        'message':'Succesfully updated a location',
+        'Updated Location': location
+    }, 200);
 };
 
-// delete a shop
-const deleteById = async (req, res) => {
-    let err, shop;
+// delete a location
+const deleteById = async(req, res) => {
+    let err, location;
     const id = req.params.id;
-    [err, shop] = await to(Shop.destroy({
-        where: {id: id}
+    [err, location] = await to(Location.destroy({
+        where: {
+            id: id
+        }
     }));
     if(err) return ReE(res, err, 500);
-    return ReS(res, {'message': `Deleted shop ${id}`,
-                    'Deleted shop': shop}, 200);
+    return ReS(res, {
+        'message': `Deleted location ${id}`,
+        'Deleted location': location
+    }, 200);
 };
 
-// shop pagination
-const getShopList = async (req, res) => {
-    let limit = 10;
+// location pagination
+const getLocationList = async(req, res) => {
+    let limit = 10; // limit per page
     let offset = 0;
-    Shop.findAndCountAll()
+    Location.findAndCountAll()
     .then( data => {
         let page = req.params.page;
         let pages = Math.ceil(data.count / limit);
             offset = limit * (page -1);
-        Shop.findAll({
-            attributes: ['id','owner','founded','locationId'],
+        Location.findAll({
+            attributes: ['id','address','zip'],
             limit: limit,
             offset: offset,
             $sort: { id: 1}
         })
-        .then( shops => {
-            res.status(200).json({'result': shops, 'count': data.count, 'pages': pages});
+        .then( locs => {
+            res.status(200).json({'Pagination Result': locs, 'count': data.count, 'pages': pages});
         });
     })
     .catch( err => {
@@ -91,7 +103,7 @@ const getShopList = async (req, res) => {
     });
 };
 
-// import csv for shop
+// import csv for location
 const importcsv = async (req, res) => {
     const file = req.file ? req.file.path : null;
     console.log('File', file);
@@ -100,19 +112,21 @@ const importcsv = async (req, res) => {
     const csv = require('../helpers/csv_validator');
 
     const headers = {
-        owner: '',
-        founded: '',
-        locationId:''
+        // owner: '',
+        // founded: '',
+        // locationId:''
+        address: '',
+        zip:''
     }
 
     async function insert(json) {
-        let err, shop;
-        [err, shop] = await to(Shop.bulkCreate(json));
+        let err, location;
+        [err, location] = await to(Location.bulkCreate(json));
         if(err) return ReE(res, err, 500);
 
         return ReS(res, {
             message: 'Successfully imported CSV file',
-            data: shop
+            data: location
         }, 200);
     }
 
@@ -135,87 +149,85 @@ const importcsv = async (req, res) => {
     start();
 }
 
-// export shops
+// export locations
 const exportcsv = async (req, res) => {
-    let err, shop;
-
-    [err, shop] = await to(Shop.findAll({
-        paranoid: false
+    let err, locations;
+    [err, locations] = await to(Shop.findAll({
+        paranoid:false
     }));
     if(err) return ReE(res, err, 500);
-    if(!shop) return ReE(res, {message:'No data to download'}, 400);
+    if(!locations) return ReE(res, {'message':'No data to download'}, 400);
 
-    shop = utils.clone(shop);
+    locations = utils.clone(locations);
 
     const json2csv = require('json2csv').Parser;
-    const parser = new json2csv({encoding:'utf-8', withBOM: true});
-    const csv = parser.parse(shop);
+    const parser = new json2csv({encoding:'utf-8', withBOM:true});
+    const csv = parser.parse(locations);
 
-    res.setHeader('Content-disposition', 'attachment; filename=Shop.csv');
+    res.setHeader('Content-disposition','attachment; filename=Location.csv');
     res.set('Content-type','text/csv');
     res.send(csv);
 }
 
-// search filter shops
+// search filter locations (exact match)
 const filter = async (req, res) => {
     let reqQuery = req.query;
     let reqQuery_Sort = req.query.sortBy;
     let condition = {};
     let sort = [];
 
-    if (Object.keys(reqQuery).length > 0) {
-        if (reqQuery_Sort) {
+    if(Object.keys(reqQuery).length > 0) {
+        if(reqQuery_Sort) {
             sort = await sorter.convertToArrSort(reqQuery_Sort);
             delete reqQuery.sortBy;
         }
         condition = reqQuery;
     }
 
-    Shop.findAll({
+    Location.findAll({
         attributes: [
-            [db.sequelize.fn('concat', db.sequelize.col('owner'), ', ', db.sequelize.col('founded')), 'Result(s):'],
+            [db.sequelize.fn('concat', db.sequelize.col('address'),',', db.sequelize.col('zip')), 'Result(s): '],
         ],
         where: condition,
         order: sort,
         paranoid: false
-    }).then(shops => {
-        res.send(shops);
-    }).catch(err => {
+    })
+    .then(locs => {
+        res.send(locs);
+    })
+    .catch(err => {
         console.log(err);
     });
-}
+};
 
-// search like shops (radagast template)
+// search like locations 
 const search = async (req, res) => {
     const {
         id,
-        owner,
-        founded,
-        locationId
+        address,
+        zip
     } = req.query;
-    [err, shops] = await to(Shop.findAll({
+    [err, locations] = await to(Location.findAll({
         attributes: [
-            [db.sequelize.fn('concat', db.sequelize.col('owner'),',', db.sequelize.col('founded'),',', db.sequelize.col('locationId')), 'Filtered:']
+            [db.sequelize.fn('concat', db.sequelize.col('address'),',', db.sequelize.col('zip')), 'Searched: ']
         ],
         where: {
             [Op.or]: [
-                {id: {[Op.like]: '%' +id+ '%'}},
-                {owner: {[Op.like]: '%' +owner+ '%'}},
-                {founded: {[Op.like]: '%' +founded+ '%'}},
-                {locationId: {[Op.like]: '%' +locationId+ '%'}}
+                {id: {[Op.like]: '%'+id+'%'}},
+                {address: {[Op.like]: '%'+address+'%'}},
+                {zip: {[Op.like]: '%'+zip+'%'}}
             ]
         },
-        paranoid:false,
+        paranoid: false,
         limit: 10
     }));
-    
+
     if(err) return ReE(res, err, 500);
     return ReS(res, {
         message: 'Searched: ',
-        data: shops
+        data: locations
     }, 200);
-}
-
+};
 
 module.exports = {
     post,
@@ -223,7 +235,7 @@ module.exports = {
     getOne,
     updateById,
     deleteById,
-    getShopList,
+    getLocationList,
     importcsv,
     exportcsv,
     filter,
