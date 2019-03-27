@@ -8,6 +8,7 @@ const upload = multer({ dest: './uploads/'});
 
 const shop = require('../controllers/shop-controller');
 const location = require('../controllers/location-controller');
+const brand = require('../controllers/brand-controller');
 
 router.post('/shop/post',                               shop.post);
 router.get('/shop/get',                                 shop.getAll);
@@ -30,6 +31,13 @@ router.get('/location/export',                          location.exportcsv);
 router.post('/location/import', upload.single('file'),  location.importcsv);
 router.get('/locations/filter',                         location.filter);
 router.get('/locations/search',                         location.search);
+
+router.post('/brand/post',                              brand.post);
+router.get('/brand/get',                                brand.getAll);
+router.put('/brand/update/:id',                         brand.updateById);
+router.delete('/brand/delete/:id',                      brand.deleteById);
+router.get('/brand/get/:id',                            brand.getOne);
+router.get('/brand/pagination/:page',                   brand.getBrandList);
 
 
 

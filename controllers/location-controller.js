@@ -186,7 +186,7 @@ const filter = async (req, res) => {
 
     Location.findAll({
         attributes: [
-            [db.sequelize.fn('concat', db.sequelize.col('address'),',', db.sequelize.col('zip')), 'Result(s): '],
+            [db.sequelize.fn('concat', db.sequelize.col('address'),',', db.sequelize.col('zip')), 'Filtered Result(s): '],
         ],
         where: condition,
         order: sort,

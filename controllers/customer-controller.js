@@ -1,96 +1,86 @@
 const db = require('../models/index');
-const utils =  require('../helpers/utils');
+const utils = require('../helpers/utils');
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
 const sorter = require('../helpers/sorter');
 
-const Shop = db.Shop;
-const Location = db.Location;
+const Customer = db.Customer;
 
-// post a shop
-const post = async (req, res) => {
+const post = async(req, res) => {
     res.setHeader('Content-type','application/json');
     const {
-        owner,
-        founded,
+        name,
+        gender,
+        address,
+        itemId,
         locationId
     } = req.body;
-    let err, shop;
-    [err, shop] = await to(Shop.create({
-        'owner': owner,
-        'founded': founded,
+    let err, customer;
+    [err, customer] = await to(Customer.create({
+        'name': name,
+        'gender': gender,
+        'address': address,
+        'itemId': itemId,
         'locationId': locationId
     }));
     if(err) return ReE(res, err, 500);
-    return ReS(res, {'message': 'Successfully created a shop',
-                    'Created Shop': shop}, 200);
+    return ReS(res, {'message': 'Successfully created a customer',
+                    'Created customer': customer}, 200);
 };
 
-// get all shop with association
 const getAll = async (req, res) => {
     res.setHeader('Content-type','application/json');
-    [err, shops] = await to(Shop.findAll({
-        include: [{
-            model: Location,
-            paranoid: false
-        }],
-        paranoid: false,
+    [err, customers] = await to(Customer.findAll({
+        paranoid:false
     }));
-    return ReS(res, {'All Shops': shops});
+    return ReS(res, {'All customers': cutsomers});
 };
 
-// get shop by id
-const getOne = async (req, res) => {
+const getOne = async(req, res) => {
     res.setHeader('Content-type','application/json');
     const id = req.params.id;
-    [err, shop] = await to(Shop.findByPk(id));
+    [err, customer] = await to(Customer.findByPk(id));
     if(err) return ReE(res, err, 500);
-    return ReS(res, {'Shop':shop}, 200);
+    return ReS(res, {'Cutomer': customer}, 200);
 };
 
-// update a shop
-const updateById = async (req, res) => {
+const updateById = async(req, res) => {
     const id = req.params.id;
-    let err, shop;
-    [err, shop] = await to(Shop.update({...req.body}, {
-        where: {
-            id: id
-        }
+    let err, customer;
+    [err, customer] = await to(Customer.update({...req.body},{where:{id:id}
     }));
     if(err) return ReE(res, err, 500);
-    return ReS(res, {'message': 'Updated a shop successfully',
-                    'Updated Shop': shop}, 200);
-};
+    return ReS(res, {'message':'Successfully updated a customer',
+                    'Updated customer': customer}, 200);
+}
 
-// delete a shop
-const deleteById = async (req, res) => {
-    let err, shop;
+const deleteById = async(req, res) => {
+    let err, customer;
     const id = req.params.id;
-    [err, shop] = await to(Shop.destroy({
-        where: {id: id}
+    [err, customer] = await to(Customer.destroy({
+        where: {id:id}
     }));
     if(err) return ReE(res, err, 500);
-    return ReS(res, {'message': `Deleted shop ${id}`,
-                    'Deleted shop': shop}, 200);
+    return ReS(res, {'message': `Deleted customer ${id}`,
+                    'Deleted customer': customer}, 200);
 };
 
-// shop pagination
-const getShopList = async (req, res) => {
+const getCustomerList = async (req, res) => {
     let limit = 10;
     let offset = 0;
-    Shop.findAndCountAll()
+    Customer.findAndCountAll()
     .then( data => {
         let page = req.params.page;
         let pages = Math.ceil(data.count / limit);
             offset = limit * (page -1);
-        Shop.findAll({
-            attributes: ['id','owner','founded','locationId'],
+        Customer.findAll({
+            attributes: ['id','name','gender','address','itemId', 'locationId'],
             limit: limit,
             offset: offset,
-            $sort: { id: 1}
+            $sort: {id:1}
         })
-        .then( shops => {
-            res.status(200).json({'result': shops, 'count': data.count, 'pages': pages});
+        .then( customers => {
+            res.status(200).json({'result': customers, 'count': data.count, 'pages':pages});
         });
     })
     .catch( err => {
@@ -98,7 +88,6 @@ const getShopList = async (req, res) => {
     });
 };
 
-// import csv for shop
 const importcsv = async (req, res) => {
     const file = req.file ? req.file.path : null;
     console.log('File', file);
@@ -107,19 +96,21 @@ const importcsv = async (req, res) => {
     const csv = require('../helpers/csv_validator');
 
     const headers = {
-        owner: '',
-        founded: '',
+        name: '',
+        gender: '',
+        address: '',
+        itemId:'',
         locationId:''
     }
 
     async function insert(json) {
-        let err, shop;
-        [err, shop] = await to(Shop.bulkCreate(json));
+        let err, customer;
+        [err, customer] = await to(Customer.bulkCreate(json));
         if(err) return ReE(res, err, 500);
 
         return ReS(res, {
             message: 'Successfully imported CSV file',
-            data: shop
+            data: customer
         }, 200);
     }
 
@@ -142,28 +133,26 @@ const importcsv = async (req, res) => {
     start();
 }
 
-// export shops
 const exportcsv = async (req, res) => {
-    let err, shop;
+    let err, customer;
 
-    [err, shop] = await to(Shop.findAll({
+    [err, customer] = await to(Customer.findAll({
         paranoid: false
     }));
     if(err) return ReE(res, err, 500);
-    if(!shop) return ReE(res, {message:'No data to download'}, 400);
+    if(!customer) return ReE(res, {message:'No data to download'}, 400);
 
-    shop = utils.clone(shop);
+    customer = utils.clone(customer);
 
     const json2csv = require('json2csv').Parser;
     const parser = new json2csv({encoding:'utf-8', withBOM: true});
-    const csv = parser.parse(shop);
+    const csv = parser.parse(customer);
 
     res.setHeader('Content-disposition', 'attachment; filename=Shop.csv');
     res.set('Content-type','text/csv');
     res.send(csv);
 }
 
-// search filter shops
 const filter = async (req, res) => {
     let reqQuery = req.query;
     let reqQuery_Sort = req.query.sortBy;
@@ -178,38 +167,41 @@ const filter = async (req, res) => {
         condition = reqQuery;
     }
 
-    Shop.findAll({
+    Customer.findAll({
         attributes: [
-            [db.sequelize.fn('concat', db.sequelize.col('owner'), ', ', db.sequelize.col('founded')), 'Filtered Result(s):'],
+            [db.sequelize.fn('concat', db.sequelize.col('name'), ', ', db.sequelize.col('gender'),',', db.sequelize.col('address'),',', db.sequelize.col('itemId'),',', db.sequelize.col('locationId')), 'Filtered Result(s):'],
         ],
         where: condition,
         order: sort,
         paranoid: false
-    }).then(shops => {
-        res.send(shops);
+    }).then(customers => {
+        res.send(customers);
     }).catch(err => {
         console.log(err);
     });
 };
 
-// search like shops (radagast template)
 const search = async (req, res) => {
     const {
         id,
-        owner,
-        founded,
+        name,
+        gender,
+        address,
+        itemId,
         locationId
     } = req.query;
-    [err, shops] = await to(Shop.findAll({
+    [err, customers] = await to(Customer.findAll({
         attributes: [
-            [db.sequelize.fn('concat', db.sequelize.col('owner'),',', db.sequelize.col('founded'),',', db.sequelize.col('locationId')), 'Filtered:']
+            [db.sequelize.fn('concat', db.sequelize.col('name'),',', db.sequelize.col('gender'),',', db.sequelize.col('address'),',', db.sequelize.col('itemId'),',', db.sequelize.col('locationId')), 'Filtered:']
         ],
         where: {
             [Op.or]: [
                 {id: {[Op.like]: '%' +id+ '%'}},
-                {owner: {[Op.like]: '%' +owner+ '%'}},
-                {founded: {[Op.like]: '%' +founded+ '%'}},
-                {locationId: {[Op.like]: '%' +locationId+ '%'}}
+                {name: {[Op.like]: '%' +name+ '%'}},
+                {gender: {[Op.like]: '%' +gender+ '%'}},
+                {address: {[Op.like]: '%' +address+ '%'}},
+                {itemId: {[Op.like]: '%' +itemId+ '%'}},
+                {locationId: {[Op.like]: '%' +locationId+ '%'}},
             ]
         },
         paranoid:false,
@@ -219,9 +211,10 @@ const search = async (req, res) => {
     if(err) return ReE(res, err, 500);
     return ReS(res, {
         message: 'Searched: ',
-        data: shops
+        data: customers
     }, 200);
 };
+
 
 
 module.exports = {
@@ -230,7 +223,7 @@ module.exports = {
     getOne,
     updateById,
     deleteById,
-    getShopList,
+    getCustomerList,
     importcsv,
     exportcsv,
     filter,

@@ -19,17 +19,5 @@ module.exports = (sequelize, DataTypes) => {
     Shop.belongsTo(models.Location, {foreignKey:'locationId'});
   };
 
-  Shop.searchables = [
-    'id',
-    'owner',
-    'founded'
-  ];
-
-  Shop.filterables = {    
-    'id':'',
-    'owner':'',
-    'founded':''
-  };
-
   return Shop;
 };
