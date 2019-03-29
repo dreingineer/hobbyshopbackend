@@ -10,8 +10,10 @@ module.exports = (sequelize, DataTypes) => {
   });
   Brand.associate = function(models) {
     // associations can be defined here
-    Brand.belongsTo(models.Category, {foreignKey:'categoryId'});
-    // Brand.hasMany(models.Item, {foreignKey:'itemId'});
+    // Brand.belongsTo(models.Category, {foreignKey:'categoryId'});
+    // Brand.hasMany(models.Items, {foreignKey:'brandId'});
+    Brand.belongsTo(models.Shop, {foreignKey:'shopId'});
+    Brand.hasMany(models.Category, {foreignKey:'brandId'});
   };
   return Brand;
 };

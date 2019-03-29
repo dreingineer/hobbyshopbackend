@@ -1,12 +1,6 @@
 'use strict';
 module.exports = (sequelize, DataTypes) => {
   const Items = sequelize.define('Items', {
-    id: {
-      type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV4,
-      primaryKey: true,
-      allowNull: false
-    },
     name: DataTypes.STRING,
     description: DataTypes.STRING
   }, {
@@ -15,8 +9,10 @@ module.exports = (sequelize, DataTypes) => {
   });
   Items.associate = function(models) {
     // associations can be defined here
-    Items.belongsTo(models.Brand, {foreignKey:'brandId'});
-    Items.belongsToMany(models.Customer, {as:'customersItem', foreignKey:'customerId', through:'customersItems'});
+    // Items.belongsTo(models.Brand, {foreignKey:'brandId'});
+    // Items.belongsToMany(models.Customer, {as:'customers', foreignKey:'customerId', through:'customersItems'});
+    Items.belongsTo(models.Category, {foreignKey:'categoryId'});
+    Items.belongsToMany(models.Customer, {as:'buyers', through:'itemsCustomers', foreignKey:'itemId', otherKey:'customerId'});
   };
   return Items;
 };

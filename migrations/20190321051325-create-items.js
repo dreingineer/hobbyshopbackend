@@ -3,10 +3,10 @@ module.exports = {
   up: (queryInterface, Sequelize) => {
     return queryInterface.createTable('items', {
       id: {
-        allowNull:false,
+        allowNull: false,
+        autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.UUID,
-        defaultValue: Sequelize.UUIDV1
+        type: Sequelize.INTEGER
       },
       name: {
         type: Sequelize.STRING
@@ -14,8 +14,11 @@ module.exports = {
       description: {
         type: Sequelize.STRING
       },
-      brandId: {
+      categoryId: {
         type: Sequelize.INTEGER
+      },
+      customerId: {
+        type: Sequelize.UUID
       },
       createdAt: {
         allowNull: false,

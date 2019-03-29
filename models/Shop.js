@@ -16,7 +16,9 @@ module.exports = (sequelize, DataTypes) => {
   Shop.associate = function(models) {
     // associations can be defined here
     // shop belongsto location
-    Shop.belongsTo(models.Location, {foreignKey:'locationId'});
+    // Shop.belongsToMany(models.Location, {as:'branches', foreignKey:'locationId', through:'shopsLocations'});
+    Shop.hasMany(models.Brand, {foreignKey:'shopId'});
+    Shop.belongsToMany(models.Location, {as:'branches', through:'shopsLocations', foreignKey:'shopId', otherKey:'locationId'});
   };
 
   return Shop;

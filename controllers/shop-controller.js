@@ -30,12 +30,10 @@ const post = async (req, res) => {
 const getAll = async (req, res) => {
     res.setHeader('Content-type','application/json');
     [err, shops] = await to(Shop.findAll({
-        include: [{
-            model: Location,
-            paranoid: false
-        }],
+        include: [{all: true}],
         paranoid: false,
     }));
+    if(err) ReE(res, err, 500);
     return ReS(res, {'All Shops': shops});
 };
 

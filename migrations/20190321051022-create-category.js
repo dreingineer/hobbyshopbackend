@@ -14,8 +14,8 @@ module.exports = {
       description: {
         type: Sequelize.STRING
       },
-      shopId: {
-        type: Sequelize.UUID
+      brandId: {
+        type: Sequelize.INTEGER
       },
       createdAt: {
         allowNull: false,

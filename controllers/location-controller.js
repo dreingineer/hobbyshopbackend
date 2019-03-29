@@ -31,6 +31,7 @@ const getAll = async (req, res) => {
     [err, locations] = await to(Location.findAll({
         paranoid: false
     }));
+    if(err) ReE(res, err, 500);
     return ReS(res, {
         'All Locations': locations
     });

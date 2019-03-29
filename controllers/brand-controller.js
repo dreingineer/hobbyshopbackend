@@ -28,10 +28,12 @@ const post = async(req, res) => {
 
 const getAll = async (req, res) => {
     res.setHeader('Content-type', 'application/json');
-    [err, brands] = await to(Brand.findAll({
+    let err, brand;
+    [err, brand] = await to(Brand.findAll({
         paranoid: false
     }));
-    return ReS(res, {'All brands': brands});
+    if(err) return ReE(res, err, 500);
+    return ReS(res, {'All brands': brand}, 200);
 };
 
 const getOne = async(req, res) => {

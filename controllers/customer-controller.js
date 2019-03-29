@@ -5,6 +5,7 @@ const Op = Sequelize.Op;
 const sorter = require('../helpers/sorter');
 
 const Customer = db.Customer;
+const Item = db.Items;
 
 const post = async(req, res) => {
     res.setHeader('Content-type','application/json');
@@ -30,10 +31,18 @@ const post = async(req, res) => {
 
 const getAll = async (req, res) => {
     res.setHeader('Content-type','application/json');
+    let err, customers;
     [err, customers] = await to(Customer.findAll({
+        include: [{
+            model: Item, as: 'faveItems',
+            attributes:['id','name', 'description'],
+            through: {
+                attributes: []
+            }
+        }],
         paranoid:false
     }));
-    return ReS(res, {'All customers': cutsomers});
+    return ReS(res, {'All customers': customers});
 };
 
 const getOne = async(req, res) => {
@@ -109,7 +118,7 @@ const importcsv = async (req, res) => {
         if(err) return ReE(res, err, 500);
 
         return ReS(res, {
-            message: 'Successfully imported CSV file',
+            message: 'Successfully imported customers',
             data: customer
         }, 200);
     }
@@ -215,7 +224,16 @@ const search = async (req, res) => {
     }, 200);
 };
 
-
+// add fave items to customer, many to many relationship
+const addItems = async(req, res) => {
+    const id = req.params.id;
+    Customer.findByPk(id)
+    .then( customer => {
+        customer.addFaveItems(req.body.itemId);
+    })
+    // .then(res.send.bind(res));
+    .then(res.send(`Added an item to customer ${id}`));
+}
 
 module.exports = {
     post,
@@ -227,5 +245,6 @@ module.exports = {
     importcsv,
     exportcsv,
     filter,
-    search
+    search,
+    addItems
 }

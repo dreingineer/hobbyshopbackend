@@ -4,7 +4,9 @@ const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
 const sorter = require('../helpers/sorter');
 
-const Item = db.Item;
+// const Item = db.Item;
+const Item = db.Items;
+const Customer = db.Customer;
 
 const post = async(req, res) => {
     res.setHeader('Content-type', 'application/json');
@@ -27,8 +29,16 @@ const post = async(req, res) => {
 const getAll = async(req,res) => {
     res.setHeader('Content-type', 'application/json');
     [err, items] = await to(Item.findAll({
+        include: [{
+            model: Customer, as:'buyers',
+            attributes:['name', 'gender', 'address'],
+            through: {
+                attributes:[]
+            }
+        }],
         paranoid: false
     }));
+    if(err) ReE(res, err, 500);
     return ReS(res, {'All items':items});
 };
 
@@ -96,19 +106,19 @@ const importcsv = async (req, res) => {
     const csv = require('../helpers/csv_validator');
 
     const headers = {
-        name: '',
-        description: '',
-        brandId: '',
+        name:'',
+        description:'',
+        brandId:''
     }
 
     async function insert(json) {
-        let err, item;
-        [err, item] = await to(Item.bulkCreate(json));
+        let err, items;
+        [err, items] = await to(Item.bulkCreate(json));
         if(err) return ReE(res, err, 500);
 
         return ReS(res, {
-            message: 'Successfully imported CSV file',
-            data: item
+            message: 'Successfully imported items',
+            data: items
         }, 200);
     }
 

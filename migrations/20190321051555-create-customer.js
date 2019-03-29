@@ -18,7 +18,7 @@ module.exports = {
         type: Sequelize.STRING
       },
       itemId: {
-        type: Sequelize.UUID
+        type: Sequelize.INTEGER
       },
       locationId: {
         type: Sequelize.INTEGER
